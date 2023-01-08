@@ -1,0 +1,14 @@
+name: docker-build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jemand771/docker-build-action@main
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          push_strategy: ${{ github.event_name == 'pull_request' && 'artifact' || 'push' }}
+          platforms: linux/amd64
