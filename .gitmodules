@@ -1,0 +1,3 @@
+[submodule "ufys"]
+	path = ufys
+	url = git@github.com:jemand771/ufys.git
