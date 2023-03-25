@@ -17,7 +17,7 @@ APP.wsgi_app = ProxyFix(APP.wsgi_app)
 
 BASE_HOSTS = os.environ.get("BASE_HOSTS", "").split(",")
 WK = worker.Worker(
-    redis.Redis(),
+    redis.Redis(host=os.environ.get("REDIS_HOST", "localhost")),
     ufys_url=os.environ["UFYS_URL"]
 )
 

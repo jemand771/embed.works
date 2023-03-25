@@ -1,6 +1,6 @@
 import enum
-import functools
-import time
+import json
+import os
 
 import redis
 import requests
@@ -33,30 +33,44 @@ class Worker:
         self.redis = redis_
         self.ufys_url = ufys_url
 
-    def get_info(self, url: str) -> UfysResponse:
-        # amazing hack from https://stackoverflow.com/a/55900800/9145163
-        return self._get_info(url, ttl_hash=time.time() // 3600)
+    @property
+    def cache_ttl(self):
+        try:
+            return int(os.environ.get("CACHE_TTL", ""))
+        except ValueError:
+            return 60 * 60
 
-    # TODO persistent cache
-    @functools.cache
-    def _get_info(self, url: str, ttl_hash) -> UfysResponse:
-        resp_json = requests.post(
-            self.ufys_url + "/video",
-            json=dict(
-                url=url
-            )
-        ).json()
+    def get_info(self, url: str) -> UfysResponse:
+        lock = self.redis.lock(f"ew-lock-{url}", timeout=30)
+        cache_key = f"ew-data-{url}"
+        lock.acquire()
+        try:
+            if (info_json_str := self.redis.get(cache_key)) is not None:
+                return self.json_to_resp(json.loads(info_json_str))
+            fresh_json = requests.post(
+                self.ufys_url + "/video",
+                json=dict(
+                    url=url
+                )
+            ).json()
+            self.redis.set(cache_key, json.dumps(fresh_json, ensure_ascii=False), ex=self.cache_ttl)
+            return self.json_to_resp(fresh_json)
+        finally:
+            lock.release()
+
+    @staticmethod
+    def json_to_resp(json_):
         try:
             result = ufys.util.dataclass_from_dict(
                 UfysResponse,
-                resp_json
+                json_
             )
         except TypeError:
             try:
                 raise EWUfysError.from_model(
                     ufys.util.dataclass_from_dict(
                         UfysError,
-                        resp_json
+                        json_
                     )
                 )
             except TypeError:
