@@ -4,6 +4,8 @@ import re
 import redis
 import requests.models
 from flask import Flask, redirect, render_template, request
+# noinspection PyPackageRequirements
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import worker
 from worker import ResponseMode
@@ -11,6 +13,7 @@ from worker import ResponseMode
 MODE_PARAM_KEY = "ew-mode"
 
 APP = Flask(__name__)
+APP.wsgi_app = ProxyFix(APP.wsgi_app)
 
 BASE_HOSTS = os.environ.get("BASE_HOSTS", "").split(",")
 WK = worker.Worker(
