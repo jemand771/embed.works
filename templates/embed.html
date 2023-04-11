@@ -1,7 +1,9 @@
 <html lang="en">
 <head>
     <meta property="og:title" content="{{ info.title }}"/>
-    <meta property="og:site_name" content="{{ info.creator }}"/>
+    {% if creator_str %}
+        <meta property="og:site_name" content="{{ creator_str }}"/>
+    {% endif %}
     <meta property="og:video" content="{{ video_url }}"/>
     <meta property="og:video:secure_url" content="{{ video_url }}"/>
     <meta property="og:video:width" content="{{ info.width }}"/>

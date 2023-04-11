@@ -63,7 +63,18 @@ def handle_url(url: str):
     # TODO auto redirect check (user agent)
     if mode == ResponseMode.direct:
         return redirect(info.video_url, code=302)
-    return render_template("embed.html", info=info, video_url=get_direct_url(request.url))
+    creator_str = info.creator
+    if info.site:
+        if creator_str:
+            creator_str += f" on {info.site}"
+        else:
+            creator_str = info.site
+    return render_template(
+        "embed.html",
+        info=info,
+        video_url=get_direct_url(request.url),
+        creator_str=creator_str,
+    )
 
 
 def get_direct_url(url):
