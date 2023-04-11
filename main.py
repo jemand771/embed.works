@@ -7,6 +7,7 @@ from flask import Flask, redirect, render_template, request
 # noinspection PyPackageRequirements
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import static
 import worker
 from worker import ResponseMode
 
@@ -71,9 +72,10 @@ def handle_url(url: str):
             creator_str = info.site
     return render_template(
         "embed.html",
+        color=static.EXTRACTOR_COLOR.get(info.site),
+        creator_str=creator_str,
         info=info,
         video_url=get_direct_url(request.url),
-        creator_str=creator_str,
     )
 
 

@@ -10,8 +10,9 @@
     <meta property="og:video:height" content="{{ info.height }}"/>
     <meta property="og:type" content="video.other"/>
     <meta property="og:video:type" content="video/mp4"/>
-    <!--TODO bring back color-->
-    <!--<meta name="theme-color" content="#ff0050" />-->
+    {% if color %}
+        <meta name="theme-color" content="{{ color }}"/>
+    {% endif %}
     <!--TODO bring back client redirects-->
     <!--<meta http-equiv="refresh" content="0; URL={{ original_url }}">-->
 </head>
