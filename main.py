@@ -4,10 +4,14 @@ import re
 import redis
 import requests.models
 from flask import Flask, redirect, render_template, request
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 # noinspection PyPackageRequirements
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import static
+import telemetry
 import worker
 from worker import ResponseMode
 
@@ -15,6 +19,11 @@ MODE_PARAM_KEY = "ew-mode"
 
 APP = Flask(__name__)
 APP.wsgi_app = ProxyFix(APP.wsgi_app)
+
+telemetry.init()
+FlaskInstrumentor().instrument_app(APP)
+RedisInstrumentor().instrument()
+RequestsInstrumentor().instrument()
 
 BASE_HOSTS = os.environ.get("BASE_HOSTS", "").split(",")
 WK = worker.Worker(
@@ -51,6 +60,7 @@ def all_requests(path):
     return "unable to parse url", 400
 
 
+@telemetry.trace_function
 def handle_url(url: str):
     mode = ResponseMode.embed
     try:

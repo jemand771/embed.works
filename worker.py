@@ -5,6 +5,7 @@ import os
 import redis
 import requests
 
+import telemetry
 import ufys.util
 from ufys.model import UfysError, UfysResponse
 
@@ -40,6 +41,7 @@ class Worker:
         except ValueError:
             return 60 * 60
 
+    @telemetry.trace_function
     def get_info(self, url: str) -> UfysResponse:
         lock = self.redis.lock(f"ew-lock-{url}", timeout=30)
         cache_key = f"ew-data-{url}"
