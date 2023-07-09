@@ -108,7 +108,9 @@ def attach_current_request_query_params(url: str) -> str:
 
 
 def build_oembed(creator_str: str, requested_url: str) -> dict[str, str]:
-    trace_id = opentelemetry.trace.get_current_span().get_span_context().trace_id
+    trace_id = opentelemetry.trace.format_trace_id(
+        opentelemetry.trace.get_current_span().get_span_context().trace_id
+    )
     provider = "embed.works"
     if TRACE_PARAM_KEY in request.args:
         provider += f" - trace {trace_id}"
