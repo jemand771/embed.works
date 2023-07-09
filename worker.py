@@ -15,6 +15,7 @@ class ResponseMode(enum.Enum):
     embed = "embed"
     direct = "direct"
     original = "redirect"
+    oembed = "oembed"
 
 
 class EWUfysError(Exception):
