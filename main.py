@@ -64,11 +64,7 @@ def all_requests(path):
 
 @telemetry.trace_function
 def handle_url(url: str):
-    mode = ResponseMode.embed
-    try:
-        mode = ResponseMode(request.args[MODE_PARAM_KEY])
-    except (KeyError, ValueError):
-        pass
+    mode = determine_response_mode()
     full_url = attach_current_request_query_params(url)
     if mode == ResponseMode.original:
         return redirect(full_url, code=302)
@@ -93,6 +89,21 @@ def handle_url(url: str):
         oembed_url=get_mode_url(request.url, ResponseMode.oembed),
         original_url=get_mode_url(request.url, ResponseMode.original)
     )
+
+
+def determine_response_mode() -> ResponseMode:
+    mode = ResponseMode.auto_embed
+    try:
+        mode = ResponseMode(request.args[MODE_PARAM_KEY])
+    except (KeyError, ValueError):
+        pass
+    if mode == ResponseMode.auto_embed:
+        mode = (
+            ResponseMode.original
+            if static.BOT_UA_REGEX.search(request.user_agent.string) is None
+            else ResponseMode.embed
+        )
+    return mode
 
 
 def attach_current_request_query_params(url: str) -> str:
