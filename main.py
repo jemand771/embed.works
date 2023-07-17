@@ -90,7 +90,8 @@ def handle_url(url: str):
         creator_str=creator_str,
         info=info,
         video_url=get_mode_url(request.url, ResponseMode.direct),
-        oembed_url=get_mode_url(request.url, ResponseMode.oembed)
+        oembed_url=get_mode_url(request.url, ResponseMode.oembed),
+        original_url=get_mode_url(request.url, ResponseMode.original)
     )
 
 
