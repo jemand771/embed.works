@@ -14,6 +14,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import static
 import telemetry
 import worker
+from ufys.model import UfysError, UfysResponse
 from worker import ResponseMode
 
 MODE_PARAM_KEY = "ew-mode"
@@ -68,7 +69,13 @@ def handle_url(url: str):
     full_url = attach_current_request_query_params(url)
     if mode == ResponseMode.original:
         return redirect(full_url, code=302)
-    info = WK.get_info(full_url)
+    infos = WK.get_info(full_url)
+    # TODO format selection
+    assert infos
+    info = infos[0]
+    if not isinstance(info, UfysResponse):
+        assert isinstance(info, UfysError)
+        return display_fancy_error(infos)
     creator_str = info.creator
     if info.site:
         if creator_str:
@@ -141,19 +148,25 @@ def get_mode_url(url, mode: ResponseMode):
     return req.url
 
 
-# TODO better errors
-@APP.errorhandler(worker.EWUfysError)
-def handle_ufys_error(ex: worker.EWUfysError):
+def display_fancy_error(errors: list[UfysError]) -> str:
+    assert errors
+    ex = errors[0]
     return render_template("error.html", code=ex.code, message=ex.message)
 
 
-@APP.errorhandler(Exception)
-def handle_any_error(_):
-    return render_template(
-        "error.html",
-        code="unknown error",
-        message="something went REALLY wrong"
-    )
+# TODO better errors
+@APP.errorhandler(worker.InvalidUfysReponse)
+def handle_ufys_error(ex: worker.InvalidUfysReponse):
+    return render_template("error.html", code=ex.code, message=ex.message)
+
+
+# @APP.errorhandler(Exception)
+# def handle_any_error(ex):
+#     return render_template(
+#         "error.html",
+#         code="unknown error",
+#         message=f"something went REALLY wrong ({str(ex)})"
+#     )
 
 
 if __name__ == '__main__':

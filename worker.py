@@ -1,6 +1,7 @@
 import enum
 import json
 import os
+import typing
 
 import redis
 import requests
@@ -18,15 +19,9 @@ class ResponseMode(enum.Enum):
     oembed = "oembed"
 
 
-class EWUfysError(Exception):
-
-    def __init__(self, code="unknown", message=""):
-        self.code = code
-        self.message = message
-
-    @classmethod
-    def from_model(cls, error: UfysError):
-        return cls(code=error.code, message=error.message)
+class InvalidUfysReponse(Exception):
+    code = "invalid-ufys-response"
+    message = "received an invalid response from a backend service"
 
 
 class Worker:
@@ -43,7 +38,7 @@ class Worker:
             return 60 * 60
 
     @telemetry.trace_function
-    def get_info(self, url: str) -> UfysResponse:
+    def get_info(self, url: str) -> list[UfysResponse | UfysError]:
         lock = self.redis.lock(f"ew-lock-{url}", timeout=30)
         cache_key = f"ew-data-{url}"
         lock.acquire()
@@ -62,20 +57,24 @@ class Worker:
             lock.release()
 
     @staticmethod
-    def json_to_resp(json_):
-        try:
-            result = ufys.util.dataclass_from_dict(
-                UfysResponse,
-                json_
-            )
-        except TypeError:
-            try:
-                raise EWUfysError.from_model(
-                    ufys.util.dataclass_from_dict(
-                        UfysError,
-                        json_
-                    )
+    def json_to_resp(json_: list[dict] | typing.Any) -> list[UfysResponse | UfysError]:
+        if not isinstance(json_, list) or not all(isinstance(entry, dict) for entry in json_):
+            raise InvalidUfysReponse()
+        class_map = dict(
+            UfysResponse=UfysResponse,
+            UfysError=UfysError,
+        )
+        results = []
+        for dict_result in json_:
+            if dict_result.get("_class") not in class_map:
+                continue
+            results.append(
+                ufys.util.dataclass_from_dict(
+                    # TODO we should do the _class type check inside ufys, not here
+                    class_map[dict_result["_class"]],
+                    dict_result
                 )
-            except TypeError:
-                raise EWUfysError()
-        return result
+            )
+        if not results:
+            raise InvalidUfysReponse()
+        return results
