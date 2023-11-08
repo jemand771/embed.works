@@ -34,6 +34,8 @@ WK = worker.Worker(
     ufys_url=os.environ["UFYS_URL"]
 )
 
+ERROR_TITLE = "oh no! something went wrong (╯°□°)╯︵ ┻━┻"
+
 
 @APP.get("/favicon.ico")
 def favicon():
@@ -148,24 +150,43 @@ def get_mode_url(url, mode: ResponseMode):
     return req.url
 
 
+def error_to_line(error: UfysError):
+    return f"{error.code}: {error.message}"
+
+
 def display_fancy_error(errors: list[UfysError]) -> str:
     assert errors
-    ex = errors[0]
-    return render_template("error.html", code=ex.code, message=ex.message)
+    lines = [error_to_line(err) for err in errors]
+    return render_template(
+        "error.html",
+        title=ERROR_TITLE,
+        message_html="<br>".join(lines),
+        message_embed="\n".join(lines),
+    )
 
 
-# TODO better errors
+# TODO *even* better errors
 @APP.errorhandler(worker.InvalidUfysReponse)
 def handle_ufys_error(ex: worker.InvalidUfysReponse):
-    return render_template("error.html", code=ex.code, message=ex.message)
+    return display_fancy_error(
+        [
+            UfysError(
+                code=ex.code,
+                message=ex.message,
+            )
+        ]
+    )
 
 
 @APP.errorhandler(Exception)
 def handle_any_error(ex):
-    return render_template(
-        "error.html",
-        code="unknown error",
-        message=f"something went REALLY wrong ({str(ex)})"
+    return display_fancy_error(
+        [
+            UfysError(
+                code="unknown error",
+                message=f"something went REALLY wrong ({str(ex)})",
+            )
+        ]
     )
 
 

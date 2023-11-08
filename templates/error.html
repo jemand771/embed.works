@@ -1,10 +1,10 @@
 <html lang="en">
 <head>
-    <meta property="og:title" content="{{ code }}"/>
-    <meta property="og:site_name" content="{{ message }}"/>
+    <meta property="og:title" content="{{ title }}"/>
+    <meta property="og:description" content="{{ message_embed | safe }}"/>
 </head>
 <body>
-<h1>{{ code }}</h1>
-<p>{{ message }}</p>
+<h1>{{ title }}</h1>
+<p>{{ message_html | safe }}</p>
 </body>
 </html>
