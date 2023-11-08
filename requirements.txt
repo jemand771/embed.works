@@ -1,4 +1,6 @@
 flask==2.2.3
+# flask just says >=2, which might install werkzeug 3 with flask 2 (oh no)
+werkzeug==2.3.8
 opentelemetry-sdk==1.18.0
 opentelemetry-exporter-otlp==1.18.0
 opentelemetry-instrumentation-flask==0.39b0
