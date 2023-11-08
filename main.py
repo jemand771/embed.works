@@ -160,13 +160,13 @@ def handle_ufys_error(ex: worker.InvalidUfysReponse):
     return render_template("error.html", code=ex.code, message=ex.message)
 
 
-# @APP.errorhandler(Exception)
-# def handle_any_error(ex):
-#     return render_template(
-#         "error.html",
-#         code="unknown error",
-#         message=f"something went REALLY wrong ({str(ex)})"
-#     )
+@APP.errorhandler(Exception)
+def handle_any_error(ex):
+    return render_template(
+        "error.html",
+        code="unknown error",
+        message=f"something went REALLY wrong ({str(ex)})"
+    )
 
 
 if __name__ == '__main__':
