@@ -12,7 +12,7 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import static
-import telemetry
+from ufys import telemetry
 import worker
 from ufys.model import UfysError, UfysResponse
 from worker import ResponseMode
@@ -23,7 +23,7 @@ TRACE_PARAM_KEY = "ew-trace"
 APP = Flask(__name__)
 APP.wsgi_app = ProxyFix(APP.wsgi_app)
 
-telemetry.init()
+telemetry.init(service_name="embed-works.web")
 FlaskInstrumentor().instrument_app(APP)
 RedisInstrumentor().instrument()
 RequestsInstrumentor().instrument()

@@ -6,7 +6,7 @@ import typing
 import redis
 import requests
 
-import telemetry
+from ufys import telemetry
 import ufys.util
 from ufys.model import UfysError, UfysResponse
 
