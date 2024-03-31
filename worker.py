@@ -17,6 +17,9 @@ class ResponseMode(enum.Enum):
     direct = "direct"
     original = "redirect"
     oembed = "oembed"
+    auto_debug = "debug"
+    embed_debug = "debug-embed"
+    raw_debug = "debug-raw"
 
 
 class InvalidUfysReponse(Exception):

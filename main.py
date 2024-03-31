@@ -1,4 +1,11 @@
+import dataclasses
+import flask
+import json
+import opentelemetry.trace
 import os
+import pygments.formatters.img
+import pygments.lexers
+import pygments.styles
 import re
 
 import opentelemetry.trace
@@ -22,6 +29,7 @@ TRACE_PARAM_KEY = "ew-trace"
 
 APP = Flask(__name__)
 APP.wsgi_app = ProxyFix(APP.wsgi_app)
+APP.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
 telemetry.init(service_name="embed-works.web")
 FlaskInstrumentor().instrument_app(APP)
@@ -35,6 +43,13 @@ WK = worker.Worker(
 )
 
 ERROR_TITLE = "oh no! something went wrong (╯°□°)╯︵ ┻━┻"
+
+
+class DataClassJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
+        return super().default(obj)
 
 
 @APP.get("/favicon.ico")
@@ -74,6 +89,10 @@ def handle_url(url: str):
     infos = WK.get_info(full_url)
     # TODO format selection
     assert infos
+    if mode == ResponseMode.raw_debug:
+        return jsonify(infos)
+    if mode == ResponseMode.embed_debug:
+        return render_debug_embed(infos)
     info = infos[0]
     if not isinstance(info, UfysResponse):
         assert isinstance(info, UfysError)
@@ -106,12 +125,11 @@ def determine_response_mode() -> ResponseMode:
         mode = ResponseMode(request.args[MODE_PARAM_KEY])
     except (KeyError, ValueError):
         pass
+    is_bot = static.BOT_UA_REGEX.search(request.user_agent.string) is not None
     if mode == ResponseMode.auto_embed:
-        mode = (
-            ResponseMode.original
-            if static.BOT_UA_REGEX.search(request.user_agent.string) is None
-            else ResponseMode.embed
-        )
+        mode = ResponseMode.embed if is_bot else ResponseMode.original
+    if mode == ResponseMode.auto_debug:
+        mode = ResponseMode.embed_debug if is_bot else ResponseMode.raw_debug
     return mode
 
 
@@ -148,6 +166,19 @@ def get_mode_url(url, mode: ResponseMode):
     req = requests.models.PreparedRequest()
     req.prepare_url(url, {MODE_PARAM_KEY: mode.value})
     return req.url
+
+
+def render_debug_embed(infos: list[UfysResponse | UfysError]):
+    text = json.dumps(infos, cls=DataClassJSONEncoder, indent=2, ensure_ascii=False)
+    lexer = pygments.lexers.get_lexer_by_name("json")
+    formatter = pygments.formatters.img.ImageFormatter(
+        line_numbers=False,
+        style=pygments.styles.get_style_by_name("one-dark")
+    )
+    image = pygments.highlight(text, lexer, formatter)
+    response = flask.make_response(image)
+    response.headers.set("Content-Type", "image/png")
+    return response
 
 
 def error_to_line(error: UfysError):
