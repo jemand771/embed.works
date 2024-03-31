@@ -1,3 +1,4 @@
+import flask
 import re
 
 EXTRACTOR_COLOR = dict(
@@ -15,3 +16,7 @@ BOT_UA_REGEX = re.compile(
     r"bot|facebook|embed|got|firefox/92|firefox/38|curl|wget|go-http|yahoo|generator|whatsapp|preview|link|proxy"
     "|vkshare|images|analyzer|index|crawl|spider|python|cfnetwork|node"
 )
+
+
+def is_bot(request: flask.Request):
+    return BOT_UA_REGEX.search(request.user_agent.string) is not None

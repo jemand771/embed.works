@@ -123,7 +123,7 @@ def determine_response_mode() -> ResponseMode:
         mode = ResponseMode(request.args[MODE_PARAM_KEY])
     except (KeyError, ValueError):
         pass
-    is_bot = static.BOT_UA_REGEX.search(request.user_agent.string) is not None
+    is_bot = static.is_bot(request)
     if mode == ResponseMode.auto_embed:
         mode = ResponseMode.embed if is_bot else ResponseMode.original
     if mode == ResponseMode.auto_debug:
