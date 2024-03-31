@@ -1,13 +1,12 @@
 import enum
 import json
 import os
-import typing
-
 import redis
 import requests
+import typing
 
-from ufys import telemetry
 import ufys.util
+from ufys import telemetry
 from ufys.model import UfysError, UfysResponse
 
 

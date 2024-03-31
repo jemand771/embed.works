@@ -7,8 +7,6 @@ import pygments.formatters.img
 import pygments.lexers
 import pygments.styles
 import re
-
-import opentelemetry.trace
 import redis
 import requests.models
 from flask import Flask, jsonify, redirect, render_template, request
@@ -19,8 +17,8 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import static
-from ufys import telemetry
 import worker
+from ufys import telemetry
 from ufys.model import UfysError, UfysResponse
 from worker import ResponseMode
 
